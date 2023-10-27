@@ -1,0 +1,22 @@
+version: "3"
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    networks:
+      - MyGrafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMI_USER=admin
+      - GF_SECURITY_ADMI_PASSWORD=123
+    volumes:
+      - "/home/bogdanov/grafana/data:/var/lib/grafana"
+      - "/home/bogdanov/grafana/datasources:/etc/grafana/datasources"
+      - "/home/bogdanov/grafana/dashboards:/etc/grafana/dashboards"
+      - "/home/bogdanov/grafana/plugins:/etc/grafana/plugins"
+networks:
+  MyGrafana:
+    driver: bridge
+    name: MyGrafana
