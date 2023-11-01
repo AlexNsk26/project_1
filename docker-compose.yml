@@ -1,0 +1,75 @@
+version: "3"
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    user: root
+    networks:
+      - MyMonitor
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - "/home/bogdanov/grafana/data:/var/lib/grafana"
+      - "/home/bogdanov/grafana/datasources:/etc/grafana/datasources"
+      - "/home/bogdanov/grafana/dashboards:/etc/grafana/dashboards"
+      - "/home/bogdanov/grafana/plugins:/var/lib/grafana/plugins"
+    depends_on:
+      - prometheus
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    networks:
+      - MyMonitor
+    volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:rw
+    - /sys:/sys:ro
+    - /var/lib/docker:/var/lib/docker:ro
+    ports:
+    - "8080:8080"
+    depends_on:
+      - prometheus
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.3.1
+    container_name: node_exporter
+    restart: unless-stopped
+    volumes:
+      - /home/bogdanov/nodeExporter:/etc/nodename:ro,rslave
+    ports:
+      - 9100:9100
+    networks:
+      - MyMonitor
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    #  - "--storage.tsdb.path=/prometheus"
+    #  - "--web.console.libraries=/etc/prometheus/console_libraries"
+    #  - "--web.console.templates=/etc/prometheus/consoles"
+    #  - "--storage.tsdb.retention.time=200h"
+    #  - "--web.enable-lifecycle"
+    networks:
+      - MyMonitor
+    user: root
+    ports:
+      - 9090:9090
+    environment:
+      TZ: "Europe/Moscow"
+    volumes:
+      - "/home/bogdanov/prometeus/data:/prometheus"
+      - "/home/bogdanov/prometeus/conf:/etc/prometheus"
+    depends_on:
+    - cadvisor
+    - node-exporter
+networks:
+  MyMonitor:
+    driver: bridge
+    name: MyMonitor
